@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Forex Gateway | Checkout</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+<div class="container">
+    <div id="setup-section">
+        <h2>Merchant Setup</h2>
+        <p style="font-size: 13px; color: #666;">First, generate an API Key to simulate being a merchant.</p>
+        <button id="btn-gen-key" onclick="generateKey()">Generate Merchant Key</button>
+        <div id="key-display" class="status-box" style="margin-top:10px;"></div>
+    </div>
+
+    <div id="payment-section" style="opacity: 0.5; pointer-events: none;">
+        <h2>Global Checkout 🌍</h2>
+        
+        <div id="payment-status" class="status-box"></div>
+
+        <form id="payment-form" onsubmit="handlePayment(event)">
+            <label>Payment Amount</label>
+            <div class="row">
+                <input type="number" id="amount" value="150" placeholder="0.00">
+                <select id="currency" style="width: 100px;">
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
+                    <option value="INR">INR</option>
+                    <option value="MYR">MYR</option>
+                    <option value="KRW">KRW</option>
+                    <option value="JPY">JPY</option>
+                    <option value="AUD">AUD</option>
+                    <option value="CAD">CAD</option>
+                    <option value="AED">AED</option>
+                </select>
+            </div>
+
+            <label>Card Number</label>
+            <input type="text" id="card_number" placeholder="4242 4242 4242 4242" maxlength="19">
+
+            <div class="row">
+                <div class="col">
+                    <label>Expiration</label>
+                    <input type="text" id="expiry" placeholder="MM/YY" maxlength="5">
+                </div>
+                <div class="col">
+                    <label>CVC</label>
+                    <input type="text" id="cvc" placeholder="123" maxlength="4">
+                </div>
+            </div>
+
+            <button type="submit" id="btn-pay">
+                <span id="btn-text">Pay Now</span>
+                <div class="loader" id="btn-loader"></div>
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    let activeApiKey = "";
+    const MASTER_KEY = "admin_secret_123"; 
+    let debounceTimer;
+
+    // --- 1. UI HELPERS ---
+    document.getElementById('card_number').addEventListener('input', function (e) {
+        e.target.value = e.target.value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim();
+    });
+    document.getElementById('expiry').addEventListener('input', function (e) {
+        var input = e.target.value.replace(/\D/g, '');
+        if (input.length > 2) {
+             e.target.value = input.substring(0, 2) + '/' + input.substring(2, 4);
+        } else {
+             e.target.value = input;
+        }
+    });
+
+    // --- 2. REAL-TIME FOREX QUOTES ---
+    document.getElementById('currency').addEventListener('change', () => fetchQuote());
+    document.getElementById('amount').addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(fetchQuote, 500);
+    });
+
+    async function fetchQuote() {
+        const currency = document.getElementById('currency').value;
+        const amount = document.getElementById('amount').value || 0;
+        const display = document.getElementById('payment-status');
+        
+        if(currency === "MYR") {
+            display.style.display = 'none'; // Hide it
+            display.className = "status-box"; 
+            return;
+        }
+
+        // --- FIX STARTS HERE ---
+        // Force the box to be visible, overriding any previous 'none'
+        display.style.display = 'block'; 
+        // --- FIX ENDS HERE ---
+
+        display.innerHTML = `⏳ Fetching live ${currency} to MYR rate...`;
+        display.className = "status-box visible";
+        display.style.backgroundColor = "#e8f4fd";
+        display.style.color = "#0c5460";
+        display.style.borderColor = "#bee5eb";
+
+        try {
+            const res = await fetch(`/v1/quote?from=${currency}&to=MYR&amount=${amount}`);
+            const data = await res.json();
+
+            if (data.rate) {
+                display.innerHTML = `
+                    <strong>🌍 Foreign Exchange Quote</strong><br>
+                    Paying: <b>${amount} ${currency}</b><br>
+                    Settlement: <b>RM${data.converted_amount} MYR</b><br>
+                    <span style="font-size: 12px; color: #666;">
+                        Rate: 1 ${currency} = ${data.rate.toFixed(4)} MYR (Includes 2.0% Spread)
+                    </span>
+                `;
+            } else {
+                display.innerText = "⚠️ Could not fetch live rates.";
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    // --- 3. STANDARD API FUNCTIONS ---
+    async function generateKey() {
+        const btn = document.getElementById('btn-gen-key');
+        const display = document.getElementById('key-display');
+        btn.disabled = true;
+        btn.innerText = "Generating...";
+
+        try {
+            const res = await fetch(`/admin/generate-key?master_key=${MASTER_KEY}&merchant_name=ForexMerchant`, { method: 'POST' });
+            const data = await res.json();
+
+            if (res.ok) {
+                activeApiKey = data.api_key;
+                display.innerHTML = `<strong>API Key Active:</strong><br><span class="api-key-display">${activeApiKey}</span>`;
+                display.className = "status-box visible success";
+                // FIX: Ensure key display is visible
+                display.style.display = 'block'; 
+                
+                document.getElementById('payment-section').style.opacity = "1";
+                document.getElementById('payment-section').style.pointerEvents = "auto";
+                btn.style.display = "none"; 
+            } else {
+                display.innerText = "Error: " + JSON.stringify(data);
+                display.className = "status-box visible error";
+                display.style.display = 'block';
+                btn.disabled = false;
+            }
+        } catch (err) {
+            alert("Connection Error");
+            btn.disabled = false;
+        }
+    }
+
+    async function handlePayment(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btn-pay');
+        const loader = document.getElementById('btn-loader');
+        const btnText = document.getElementById('btn-text');
+        const status = document.getElementById('payment-status');
+        
+        btn.disabled = true;
+        btnText.style.display = "none";
+        loader.style.display = "block";
+        
+        // FIX: Ensure status box is visible for the result
+        status.style.display = 'block';
+
+        const expRaw = document.getElementById('expiry').value.split('/');
+        const payload = {
+            amount: parseFloat(document.getElementById('amount').value),
+            currency: document.getElementById('currency').value,
+            card_number: document.getElementById('card_number').value.replace(/\s/g, ''),
+            exp_month: parseInt(expRaw[0]),
+            exp_year: parseInt("20" + expRaw[1]),
+            cvc: document.getElementById('cvc').value
+        };
+
+        try {
+            const res = await fetch('/v1/charges', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-API-KEY': activeApiKey },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            btn.disabled = false;
+            btnText.style.display = "block";
+            loader.style.display = "none";
+
+            if (res.ok) {
+                let msg = `✅ <strong>Payment Successful!</strong><br>`;
+                if (data.settlement_amount) {
+                     msg += `Paid: ${data.original_amount} ${data.original_currency}<br>
+                             Settled: <strong>${data.settlement_amount} MYR</strong><br>`;
+                }
+                msg += `<span style="font-size:12px; color:#555">Txn ID: ${data.transaction_id}</span>`;
+                
+                status.innerHTML = msg;
+                status.className = "status-box visible success";
+                status.style.backgroundColor = "#e6fffa";
+                status.style.color = "#00aa00";
+            } else {
+                status.innerText = `⛔ Declined: ${data.error || data.message}`;
+                status.className = "status-box visible error";
+                status.style.backgroundColor = "#fee";
+                status.style.color = "#df1b41";
+            }
+        } catch (err) {
+            status.innerText = "❌ Network Error.";
+            status.className = "status-box visible error";
+            btn.disabled = false;
+            btnText.style.display = "block";
+            loader.style.display = "none";
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+:root {
+    --primary: #635bff;
+    --bg: #f6f9fc;
+    --text: #3c4257;
+    --card-bg: #ffffff;
+    --error: #df1b41;
+    --success: #00aa00;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 15px 35px rgba(50,50,93,.1), 0 5px 15px rgba(0,0,0,.07);
+            width: 100%;
+            max-width: 450px;
+        }
+        h2 { margin-top: 0; color: var(--text); }
+        
+        .status-box {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none; 
+        }
+        .status-box.visible { display: block; }
+        .error { background-color: #fee; color: var(--error); border: 1px solid var(--error); }
+        .success { background-color: #e6fffa; color: var(--success); border: 1px solid var(--success); }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e6e6e6;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 1px var(--primary);
+        }
+        .row { display: flex; gap: 15px; }
+        .col { flex: 1; }
+
+        button {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover { background-color: #5469d4; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        .loader {
+            display: none;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Setup Section Styles */
+        #setup-section { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+        .api-key-display { font-family: monospace; background: #eee; padding: 5px; border-radius: 4px; font-size: 12px; word-break: break-all; }
