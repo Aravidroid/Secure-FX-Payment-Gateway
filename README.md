@@ -1,8 +1,3 @@
-Secure AI Payment Gateway - README
-
-(Shortened: same content as provided earlier, in plain text for download)
-
-
 # 🔐 Secure AI Payment Gateway (FX + Fraud + Rate-Limit + Signed Quotes)
 
 A fully-asynchronous, production-grade payment gateway backend built with **Flask**, **Redis**, and **Python**, designed to simulate real-world fintech infrastructure.
